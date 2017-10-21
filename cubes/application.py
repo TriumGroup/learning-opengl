@@ -11,24 +11,32 @@ def signum(x):
     return 1 if x >= 0 else -1
 
 class Application:
+    _LIGHTS = [
+        (0, 0, -1, 1),
+        (1, 0, 0, 1),
+        (0, 1, 0, 1),
+    ]
+
     def __init__(self):
         self._colors = [(random(), random(), random()) for _ in scene_data.FACES]
         self._rotate_y = 0
         self._rotate_x = 0
         self._rotate_z = 0
+        self._light_mode = 0
 
         glutInit(sys.argv)
         glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH)
         glutCreateWindow(b"Hello world!")
 
         glEnable(GL_DEPTH_TEST)
-        glEnable(GL_LIGHTING)
-        glEnable(GL_LIGHT0)
         glEnable(GL_COLOR_MATERIAL)
+        glEnable(GL_LIGHT0)
+        glEnable(GL_LIGHTING)
 
         self.setup_callbacks()
 
     def render(self):
+        print(self._LIGHTS[self._light_mode])
         glMatrixMode(GL_MODELVIEW)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
@@ -57,6 +65,10 @@ class Application:
             self._rotate_z += 5
         elif key == b'x':
             self._rotate_z -= 5
+        elif key == b'l':
+            print(self._LIGHTS[self._light_mode])
+            self._light_mode = (self._light_mode + 1) % len(self._LIGHTS)
+            print(self._LIGHTS[self._light_mode])
         glutPostRedisplay()
 
     def draw_scene(self):
@@ -74,7 +86,8 @@ class Application:
         glRotatef(self._rotate_z, 0.0, 0.0, 1.0)
 
     def set_light(self):
-        glLight(GL_LIGHT0, GL_POSITION, [0, 0, -1, 0])
+        glLight(GL_LIGHT0, GL_POSITION, self._LIGHTS[self._light_mode])
+
 
     def setup_callbacks(self):
         glutDisplayFunc(self.render)
