@@ -7,6 +7,8 @@ from OpenGL.GLUT import *
 
 import cubes.scene_data as scene_data
 
+def signum(x):
+    return 1 if x >= 0 else -1
 
 class Application:
     def __init__(self):
@@ -46,25 +48,6 @@ class Application:
 
         for i, face in enumerate(scene_data.FACES):
             glColor3f(*self._colors[i])
-            coordinates_last = [None, None, None]
-            coordinates_status = [True, True, True]
-            for point in face:
-                if coordinates_last[0] is None:
-                    coordinates_last[0] = point.x
-                elif coordinates_status[0] and coordinates_last[0] != point.x:
-                    coordinates_status[0] = False
-
-                if coordinates_last[1] is None:
-                    coordinates_last[1] = point.y
-                elif coordinates_status[1] and coordinates_last[1] != point.y:
-                    coordinates_status[1] = False
-
-                if coordinates_last[2] is None:
-                    coordinates_last[2] = point.z
-                elif coordinates_status[2] and coordinates_last[2] != point.z:
-                    coordinates_status[2] = False
-
-            normal = [-int(x) for x in coordinates_status]
             glNormal3f(*scene_data.NORMALS[i])
             for point in face:
                 glVertex3f(point.x, point.y, point.z)
