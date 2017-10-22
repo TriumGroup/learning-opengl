@@ -8,7 +8,7 @@ class ObjLoader(object):
         self.quad_faces = []
         self.polygon_faces = []
         self.normals = []
-        # -----------------------
+
         try:
             f = open(filename)
             n = 1
@@ -33,7 +33,6 @@ class ObjLoader(object):
 
                 elif line[0] == "f":
                     string = line.replace("//", "/")
-                    # ---------------------------------------------------
                     i = string.find(" ") + 1
                     face = []
                     for item in range(string.count(" ")):
@@ -42,7 +41,6 @@ class ObjLoader(object):
                             break
                         face.append(string[i:string.find(" ", i)])
                         i = string.find(" ", i) + 1
-                    # ---------------------------------------------------
                     if string.count("/") == 3:
                         self.triangle_faces.append(tuple(face))
                     elif string.count("/") == 4:
@@ -53,7 +51,7 @@ class ObjLoader(object):
         except IOError:
             print("Could not open the .obj file...")
 
-    def render_scene(self, colorify, colors):
+    def render_scene(self, colors):
         color = 0
         if len(self.triangle_faces) > 0:
             glBegin(GL_TRIANGLES)
@@ -61,9 +59,8 @@ class ObjLoader(object):
                 n = face[0]
                 normal = self.normals[int(n[n.find("/") + 1:]) - 1]
                 glNormal3fv(normal)
-                if colorify:
-                    glColor3f(*colors[color])
-                    color += 1
+                glColor3f(*colors[color])
+                color += 1
                 for f in face:
                     glVertex3fv(self.vertices[int(f[:f.find("/")]) - 1])
             glEnd()
@@ -74,9 +71,8 @@ class ObjLoader(object):
                 n = face[0]
                 normal = self.normals[int(n[n.find("/") + 1:]) - 1]
                 glNormal3fv(normal)
-                if colorify:
-                    glColor3f(*colors[color])
-                    color += 1
+                glColor3f(*colors[color])
+                color += 1
                 for f in face:
                     glVertex3fv(self.vertices[int(f[:f.find("/")]) - 1])
             glEnd()
@@ -87,9 +83,8 @@ class ObjLoader(object):
                 n = face[0]
                 normal = self.normals[int(n[n.find("/") + 1:]) - 1]
                 glNormal3fv(normal)
-                if colorify:
-                    glColor3f(*colors[color])
-                    color += 1
+                glColor3f(*colors[color])
+                color += 1
                 for f in face:
                     glVertex3fv(self.vertices[int(f[:f.find("/")]) - 1])
                 glEnd()

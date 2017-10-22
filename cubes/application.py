@@ -1,5 +1,7 @@
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 from random import random
+from os import listdir
+from os.path import isfile, join
 
 from OpenGL.GL import *
 from OpenGL.GLU import *
@@ -54,8 +56,8 @@ class Application:
         )
     ]
 
-    def __init__(self):
-        self._colors = [(random(), random(), random()) for _ in range(0, 1000)] # Ploho
+    def __init__(self, path):
+        self._colors = defaultdict(lambda: (random(), random(), random()))
         self._scene_rotation = Rotation()
         self._light_rotation = Rotation()
         self._rotations = [self._scene_rotation, self._light_rotation]
@@ -64,7 +66,6 @@ class Application:
         self._spot_light = True
         self._material = 0
         self._model = 0
-        self._colorify = True
         self._zoom = 100
 
         glutInit(sys.argv)
@@ -75,14 +76,7 @@ class Application:
         glEnable(GL_LIGHTING)
 
         self.setup_callbacks()
-
-        self.models = [
-            graphics.ObjLoader("files/cubes.txt"),
-            graphics.ObjLoader("files/plane.txt"),
-            graphics.ObjLoader("files/scene.txt"),
-            graphics.ObjLoader("files/cube.txt"),
-            graphics.ObjLoader("files/monkey.txt")
-        ]
+        self.models = [graphics.ObjLoader(join(path, f)) for f in listdir(path) if isfile(join(path, f))]
 
     def render(self):
         glMatrixMode(GL_MODELVIEW)
@@ -96,15 +90,12 @@ class Application:
             self.light_transformations()
             self.draw_light()
 
-        glLoadIdentity()
-
-        gluPerspective(80, 4.0 / 3.0, 1.0, 100.0)
-        gluLookAt(-3*100/self._zoom, 5*100/self._zoom, 5*100/self._zoom, 0, 0, 0, 0, 1, 0)
+        self.camera()
 
         self.scene_transformations()
         self.set_material()
         glColor3f(*self._colors[0])
-        self.models[self._model].render_scene(self._colorify, self._colors)
+        self.models[self._model].render_scene(self._colors)
 
         glFlush()
         glutSwapBuffers()
@@ -127,13 +118,9 @@ class Application:
             self._material = (self._material + 1) % len(self._MATERIALS)
         elif key == b'n':
             self._model = (self._model + 1) % len(self.models)
-        elif key == b'b':
-            self._model = (self._model - 1) % len(self.models)
-        elif key == b'c':
-            self._colorify = not self._colorify
-        elif key == b'q':
+        elif key == b'+':
             self._zoom += 10
-        elif key == b'a':
+        elif key == b'-':
             if self._zoom > 10:
                 self._zoom -= 10
         glutPostRedisplay()
@@ -170,6 +157,29 @@ class Application:
         glutDisplayFunc(self.render)
         glutSpecialFunc(self.on_key_press)
         glutKeyboardFunc(self.on_key_press)
+
+    def camera(self):
+        glMatrixMode(GL_PROJECTION)
+        glLoadIdentity()
+        gluPerspective(
+            80,
+            1,
+            1.0,
+            100.0
+        )
+        glMatrixMode(GL_MODELVIEW)
+        glLoadIdentity()
+        gluLookAt(
+            -3*100/self._zoom,
+            5*100/self._zoom,
+            5*100/self._zoom,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0
+        )
 
     @staticmethod
     def gl_set_bool(name, value):
