@@ -7,22 +7,30 @@ from OpenGL.GLUT import *
 
 import cubes.scene_data as scene_data
 
-def signum(x):
-    return 1 if x >= 0 else -1
+class Rotation:
+    def __init__(self):
+        self.x = 0
+        self.y = 0
+        self.z = 0
 
 class Application:
-    _LIGHTS = [
-        (0, 0, -1, 1),
-        (1, 0, 0, 1),
-        (0, 1, 0, 1),
-    ]
+    _ROTATION_DELTA = 5
+    _ROTATIONS_KEYS_MAPPINGS = {
+        GLUT_KEY_RIGHT : ('y', +1),
+        GLUT_KEY_LEFT : ('y', -1),
+        GLUT_KEY_UP : ('x', +1),
+        GLUT_KEY_DOWN : ('x', -1),
+        b'z' : ('z', +1),
+        b'x' : ('z', -1)
+    }
 
     def __init__(self):
         self._colors = [(random(), random(), random()) for _ in scene_data.FACES]
-        self._rotate_y = 0
-        self._rotate_x = 0
-        self._rotate_z = 0
-        self._light_mode = 0
+        self._scene_rotation = Rotation()
+        self._light_rotation = Rotation()
+        self._rotations = [self._scene_rotation, self._light_rotation]
+        self._current_rotation = 0
+        self._lightning = True
 
         glutInit(sys.argv)
         glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH)
@@ -30,45 +38,43 @@ class Application:
 
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_COLOR_MATERIAL)
-        glEnable(GL_LIGHT0)
         glEnable(GL_LIGHTING)
 
         self.setup_callbacks()
 
     def render(self):
-        print(self._LIGHTS[self._light_mode])
         glMatrixMode(GL_MODELVIEW)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
         glLoadIdentity()
 
-        self.transformations()
-        self.draw_scene()
+        self.setup_light()
+
+        if self._lightning:
+            self.light_transformations()
+            self.draw_light()
 
         glLoadIdentity()
 
-        self.set_light()
+        self.scene_transformations()
+        self.draw_scene()
 
         glFlush()
         glutSwapBuffers()
 
     def on_key_press(self, key, x, y):
-        if key == GLUT_KEY_RIGHT:
-            self._rotate_y += 5
-        elif key == GLUT_KEY_LEFT:
-            self._rotate_y -= 5
-        elif key == GLUT_KEY_UP:
-            self._rotate_x += 5
-        elif key == GLUT_KEY_DOWN:
-            self._rotate_x -= 5
-        elif key == b'z':
-            self._rotate_z += 5
-        elif key == b'x':
-            self._rotate_z -= 5
+        if key in self._ROTATIONS_KEYS_MAPPINGS:
+            rotation = self._rotations[self._current_rotation]
+            rotation_action = self._ROTATIONS_KEYS_MAPPINGS[key]
+            coordinate, signum = rotation_action
+            rotation_angle = getattr(rotation, coordinate)
+            rotation_angle += self._ROTATION_DELTA * signum
+            setattr(rotation, coordinate, rotation_angle)
+        elif key == b'r':
+            self._current_rotation = (self._current_rotation + 1) % len(self._rotations)
         elif key == b'l':
-            print(self._LIGHTS[self._light_mode])
-            self._light_mode = (self._light_mode + 1) % len(self._LIGHTS)
-            print(self._LIGHTS[self._light_mode])
+            self._lightning = not self._lightning
+        glutPostRedisplay()
         glutPostRedisplay()
 
     def draw_scene(self):
@@ -80,14 +86,25 @@ class Application:
                 glVertex3f(point.x, point.y, point.z)
         glEnd()
 
-    def transformations(self):
-        glRotatef(self._rotate_x, 1.0, 0.0, 0.0)
-        glRotatef(self._rotate_y, 0.0, 1.0, 0.0)
-        glRotatef(self._rotate_z, 0.0, 0.0, 1.0)
+    def rotate_transformation(self, rotation):
+        glRotatef(rotation.x, 1.0, 0.0, 0.0)
+        glRotatef(rotation.y, 0.0, 1.0, 0.0)
+        glRotatef(rotation.z, 0.0, 0.0, 1.0)
 
-    def set_light(self):
-        glLight(GL_LIGHT0, GL_POSITION, self._LIGHTS[self._light_mode])
+    def scene_transformations(self):
+        self.rotate_transformation(self._scene_rotation)
 
+    def light_transformations(self):
+        self.rotate_transformation(self._light_rotation)
+
+    def draw_light(self):
+        glLightfv(GL_LIGHT0, GL_POSITION, (0, 0, -1, 1))
+
+    def setup_light(self):
+        if self._lightning:
+            glEnable(GL_LIGHT0)
+        else:
+            glDisable(GL_LIGHT0)
 
     def setup_callbacks(self):
         glutDisplayFunc(self.render)
