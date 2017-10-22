@@ -70,7 +70,7 @@ class Application:
 
         glutInit(sys.argv)
         glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH)
-        glutCreateWindow(b"Hello world!")
+        glutCreateWindow(b"Task 6")
 
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_LIGHTING)
