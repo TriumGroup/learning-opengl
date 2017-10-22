@@ -5,7 +5,7 @@ from OpenGL.GL import *
 from OpenGL.GLU import *
 from OpenGL.GLUT import *
 
-import cubes.scene_data as scene_data
+import cubes.graphics as graphics
 
 Material = namedtuple('Material', ['ambient', 'diffuse', 'specular', 'shine'])
 
@@ -55,7 +55,7 @@ class Application:
     ]
 
     def __init__(self):
-        self._colors = [(random(), random(), random()) for _ in scene_data.FACES]
+        self._colors = [(random(), random(), random()) for _ in range(0, 1000)] # Ploho
         self._scene_rotation = Rotation()
         self._light_rotation = Rotation()
         self._rotations = [self._scene_rotation, self._light_rotation]
@@ -63,6 +63,9 @@ class Application:
         self._lightning = True
         self._spot_light = True
         self._material = 0
+        self._model = 0
+        self._colorify = True
+        self._zoom = 100
 
         glutInit(sys.argv)
         glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH)
@@ -72,6 +75,14 @@ class Application:
         glEnable(GL_LIGHTING)
 
         self.setup_callbacks()
+
+        self.models = [
+            graphics.ObjLoader("files/cubes.txt"),
+            graphics.ObjLoader("files/plane.txt"),
+            graphics.ObjLoader("files/scene.txt"),
+            graphics.ObjLoader("files/cube.txt"),
+            graphics.ObjLoader("files/monkey.txt")
+        ]
 
     def render(self):
         glMatrixMode(GL_MODELVIEW)
@@ -87,9 +98,13 @@ class Application:
 
         glLoadIdentity()
 
+        gluPerspective(80, 4.0 / 3.0, 1.0, 100.0)
+        gluLookAt(-3*100/self._zoom, 5*100/self._zoom, 5*100/self._zoom, 0, 0, 0, 0, 1, 0)
+
         self.scene_transformations()
         self.set_material()
-        self.draw_scene()
+        glColor3f(*self._colors[0])
+        self.models[self._model].render_scene(self._colorify, self._colors)
 
         glFlush()
         glutSwapBuffers()
@@ -110,16 +125,18 @@ class Application:
             self._spot_light = not self._spot_light
         elif key == b'm':
             self._material = (self._material + 1) % len(self._MATERIALS)
+        elif key == b'n':
+            self._model = (self._model + 1) % len(self.models)
+        elif key == b'b':
+            self._model = (self._model - 1) % len(self.models)
+        elif key == b'c':
+            self._colorify = not self._colorify
+        elif key == b'q':
+            self._zoom += 10
+        elif key == b'a':
+            if self._zoom > 10:
+                self._zoom -= 10
         glutPostRedisplay()
-
-    def draw_scene(self):
-        glBegin(GL_QUADS)
-        for i, face in enumerate(scene_data.FACES):
-            glColor3f(*self._colors[i])
-            glNormal3f(*scene_data.NORMALS[i])
-            for point in face:
-                glVertex3f(point.x, point.y, point.z)
-        glEnd()
 
     def rotate_transformation(self, rotation):
         glRotatef(rotation.x, 1.0, 0.0, 0.0)
