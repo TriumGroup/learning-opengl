@@ -31,6 +31,7 @@ class Application:
         self._rotations = [self._scene_rotation, self._light_rotation]
         self._current_rotation = 0
         self._lightning = True
+        self._spot_light = True
 
         glutInit(sys.argv)
         glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH)
@@ -74,6 +75,8 @@ class Application:
             self._current_rotation = (self._current_rotation + 1) % len(self._rotations)
         elif key == b'l':
             self._lightning = not self._lightning
+        elif key == b'd':
+            self._spot_light = not self._spot_light
         glutPostRedisplay()
         glutPostRedisplay()
 
@@ -98,7 +101,7 @@ class Application:
         self.rotate_transformation(self._light_rotation)
 
     def draw_light(self):
-        glLightfv(GL_LIGHT0, GL_POSITION, (0, 0, -1, 1))
+        glLightfv(GL_LIGHT0, GL_POSITION, (0, 0, -1, int(self._spot_light)))
 
     def setup_light(self):
         if self._lightning:
